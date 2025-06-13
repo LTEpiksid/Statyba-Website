@@ -1,10 +1,10 @@
 // admin-dashboard.js
+// This script is now the sole handler for the admin panel's login and overall dashboard navigation/management.
 import { db, storage, auth, appId, signOut } from './firebase.js';
 import { collection, addDoc, getDocs, deleteDoc, doc, query, serverTimestamp } from 'firebase/firestore';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { generateCaptchaText, createLoginAttemptManager } from './auth-utils.js'; // Import auth utilities
-// Corrected import: only import showNotification and showConfirmationModal
-import { showNotification, showConfirmationModal } from './ui-utils.js'; 
+import { generateCaptchaText, createLoginAttemptManager } from './auth-utils.js';
+import { showNotification, showConfirmationModal } from './ui-utils.js';
 
 console.log('admin-dashboard.js: db imported at top level:', db);
 
@@ -25,13 +25,13 @@ console.log('admin-dashboard.js: Imported functions from main.js:', {
     deleteMessageFromFirebase 
 }); 
 
-// --- Global State Variables ---
+// --- Global State Variables for Login ---
 let currentCaptchaText = '';
 const MAX_ATTEMPTS = 5;
 const COOLDOWN_SECONDS = 30;
 const loginAttemptManager = createLoginAttemptManager(MAX_ATTEMPTS, COOLDOWN_SECONDS);
 
-// --- DOM Elements ---
+// --- DOM Elements for Login ---
 const loginSection = document.getElementById('login-section');
 const adminDashboard = document.getElementById('admin-dashboard');
 const loginForm = document.getElementById('login-form');
@@ -47,7 +47,7 @@ const cooldownTimerSpan = document.getElementById('cooldown-timer');
 const attemptsCounter = document.getElementById('attempts-counter');
 const attemptsCountSpan = document.getElementById('attempts-count');
 
-// Corrected: Use 'editor-logout-btn' as defined in admin-index.html
+// Dashboard Logout button (common to the whole admin dashboard)
 const logoutBtn = document.getElementById('editor-logout-btn'); 
 
 // Project Management Elements
@@ -76,10 +76,9 @@ const tabContents = document.querySelectorAll('.tab-content');
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
     console.log('admin-dashboard.js: DOMContentLoaded fired.');
-    // Removed: initializeNotificationModal(); initializeConfirmationModal();
-    // These are now handled by ui-utils.js itself on DOMContentLoaded.
-    setupLoginPersistence();
-    generateAndDisplayCaptcha();
+    // UI utilities are initialized by ui-utils.js on DOMContentLoaded.
+    setupLoginPersistence(); // This will check auth state and show login or dashboard.
+    generateAndDisplayCaptcha(); // Generate CAPTCHA for the login form.
     updateLoginButtonState();
     updateAttemptsCounter();
 });
@@ -100,7 +99,7 @@ function setupLoginPersistence() {
 function showLoginForm() {
     loginSection.classList.remove('hidden');
     adminDashboard.classList.add('hidden');
-    generateAndDisplayCaptcha();
+    generateAndDisplayCaptcha(); // Re-generate CAPTCHA on showing login form
     emailInput.value = '';
     passwordInput.value = '';
     captchaInput.value = '';
@@ -111,11 +110,12 @@ async function showAdminDashboard() {
     loginSection.classList.add('hidden');
     adminDashboard.classList.remove('hidden');
     // Set default tab to 'portfolio' or 'content-editor'
-    document.getElementById('portfolio-tab-btn').click(); // Simulate click on Portfolio tab
+    // Simulate click on Portfolio tab to load its content
+    document.getElementById('portfolio-tab-btn').click();
     await loadAdminDashboardData();
 }
 
-// --- CAPTCHA Functions ---
+// --- CAPTCHA Functions (Centralized here) ---
 function generateAndDisplayCaptcha() {
     currentCaptchaText = generateCaptchaText();
     if (captchaDisplay) {
@@ -180,7 +180,7 @@ function updateAttemptsCounter() {
     }
 }
 
-// --- Handlers ---
+// --- Login Handlers (Centralized here) ---
 async function handleLogin(e) {
     e.preventDefault();
 
@@ -193,6 +193,7 @@ async function handleLogin(e) {
         return;
     }
 
+    // IMPORTANT: Check against the currentCaptchaText managed by this script
     if (enteredCaptcha !== currentCaptchaText) {
         const isCooldown = loginAttemptManager.recordFailedAttempt();
         updateAttemptsCounter();
@@ -202,7 +203,7 @@ async function handleLogin(e) {
         } else {
             showNotification('Invalid CAPTCHA', 'The security code you entered is incorrect. Please try again.', 'error');
         }
-        generateAndDisplayCaptcha();
+        generateAndDisplayCaptcha(); // Generate new CAPTCHA on failure
         captchaInput.value = '';
         return;
     }
@@ -232,7 +233,7 @@ async function handleLogin(e) {
             showNotification('Login Failed', errorMessage, 'error');
         }
         console.error('Firebase Auth Login Error:', error);
-        generateAndDisplayCaptcha();
+        generateAndDisplayCaptcha(); // Generate new CAPTCHA on login failure
     } finally {
         passwordInput.value = '';
         captchaInput.value = '';
@@ -464,7 +465,7 @@ async function loadAdminDashboardData() {
             } else if (targetTab === 'messages') {
                 await loadMessagesInAdminPanel();
             }
-            // For 'content-editor', load is handled by admin-index-editor.js
+            // For 'content-editor', load is handled by admin-index-editor.js (which now relies on auth state)
         }
         
         const lastUpdatedSpan = document.getElementById('last-updated');
@@ -477,24 +478,23 @@ async function loadAdminDashboardData() {
     }
 }
 
-// --- Event Listeners ---
+// --- Event Listeners (Centralized here) ---
 loginForm.addEventListener('submit', handleLogin);
+refreshCaptchaBtn.addEventListener('click', generateAndDisplayCaptcha); // Re-generate CAPTCHA button
 
-// Ensure logoutBtn is not null before adding listener
+// Logout button is shared and needs to be handled by the main dashboard script
 if (logoutBtn) {
     logoutBtn.addEventListener('click', handleLogout);
 } else {
     console.warn("Logout button with ID 'editor-logout-btn' not found.");
 }
 
-
 addProjectModalBtn.addEventListener('click', showAddProjectForm);
 cancelAddProjectBtn.addEventListener('click', hideAddProjectForm);
 projectForm.addEventListener('submit', handleAddProject);
 
-refreshCaptchaBtn.addEventListener('click', generateAndDisplayCaptcha);
 
-// Tab switching logic
+// Tab switching logic (Centralized here)
 tabButtons.forEach(button => {
     button.addEventListener('click', () => {
         const targetTab = button.dataset.tab;
@@ -520,7 +520,7 @@ tabButtons.forEach(button => {
         activeTabContent.classList.remove('hidden');
         activeTabContent.setAttribute('aria-hidden', 'false'); // ARIA
 
-        // Load data for the active tab (only if it's not the content-editor tab, which has its own script)
+        // Load data for the active tab (content-editor is handled by admin-index-editor.js via its auth listener)
         if (targetTab === 'portfolio') {
             loadProjectsInAdminPanel();
         } else if (targetTab === 'messages') {

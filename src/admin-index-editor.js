@@ -1,36 +1,18 @@
 // admin-index-editor.js
-// This script will be loaded only by admin-index.html, specifically for the content editor tab.
+// This script will be loaded only by admin.html (formerly admin-index.html),
+// specifically for the content editor tab, and will now rely on admin-dashboard.js for login.
 import { db, auth, appId, signOut } from './firebase.js';
 import { getDoc, setDoc, doc, serverTimestamp } from 'firebase/firestore';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { generateCaptchaText, createLoginAttemptManager } from './auth-utils.js'; // Import auth utilities
-// Corrected import: only import showNotification and showConfirmationModal, trapFocus, releaseFocus
-import { showNotification, showConfirmationModal, trapFocus, releaseFocus } from './ui-utils.js'; 
+// Removed: signInWithEmailAndPassword, generateCaptchaText, createLoginAttemptManager
+import { showNotification, showConfirmationModal, trapFocus, releaseFocus } from './ui-utils.js';
 
-// --- Admin Login State Variables ---
-const MAX_ATTEMPTS = 5;
-const COOLDOWN_SECONDS = 30;
-const loginAttemptManager = createLoginAttemptManager(MAX_ATTEMPTS, COOLDOWN_SECONDS);
-let currentCaptchaText = '';
+// --- No more Admin Login State Variables here ---
+// The login state and CAPTCHA are now managed exclusively by admin-dashboard.js
 
-// --- Admin Login DOM Elements (for initial login screen) ---
-const loginSection = document.getElementById('login-section');
-const editorDashboard = document.getElementById('admin-dashboard'); // Main dashboard container (admin-dashboard is the same ID)
-const loginForm = document.getElementById('login-form');
-const captchaDisplay = document.getElementById('captcha-display');
-const captchaInput = document.getElementById('captcha-input');
-const refreshCaptchaBtn = document.getElementById('refresh-captcha');
-const emailInput = document.getElementById('email');
-const passwordInput = document.getElementById('password');
-const loginBtn = document.getElementById('login-btn');
-const loginBtnText = document.getElementById('login-btn-text');
-const cooldownMessage = document.getElementById('cooldown-message');
-const cooldownTimerSpan = document.getElementById('cooldown-timer');
-const attemptsCounter = document.getElementById('attempts-counter');
-const attemptsCountSpan = document.getElementById('attempts-count');
-
-// --- Editor-specific Dashboard Elements ---
-const editorLogoutBtn = document.getElementById('editor-logout-btn'); // Main dashboard logout
+// --- DOM Elements ---
+// Only editor-specific DOM elements are needed here. Login elements are in admin-dashboard.js.
+const editorDashboard = document.getElementById('admin-dashboard'); // Main dashboard container
+const editorLogoutBtn = document.getElementById('editor-logout-btn'); // Main dashboard logout button
 const saveAllChangesBtn = document.getElementById('save-all-changes-btn');
 const saveAllChangesText = document.getElementById('save-all-changes-text');
 const saveAllChangesSpinner = document.getElementById('save-all-changes-spinner');
@@ -57,183 +39,30 @@ let saveChangesSpinnerPanel;
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
     console.log('admin-index-editor.js: DOMContentLoaded fired.');
-    // Removed: initializeNotificationModal(); initializeConfirmationModal();
-    // These are now handled by ui-utils.js itself on DOMContentLoaded.
-    setupLoginPersistence();
-    generateAndDisplayCaptcha();
-    updateLoginButtonState();
-    updateAttemptsCounter();
-    initializeEditorUI(); // Initialize editor UI elements regardless of login state
+    // No login/captcha initialization here.
+    initializeEditorUI(); // Initialize editor UI elements
+    setupLoginPersistence(); // This will now just check auth state and show/hide editor.
 });
 
 
-// --- Auth State and Login Persistence for Editor ---
+// --- Auth State and Login Persistence for Editor (simplified) ---
 function setupLoginPersistence() {
     auth.onAuthStateChanged(user => {
         if (user) {
-            console.log('admin-index-editor.js: User is authenticated.');
-            showEditorDashboard();
+            console.log('admin-index-editor.js: User is authenticated. Showing editor dashboard sections.');
+            // Only show the editor dashboard if it's currently the active tab
+            const contentEditorTab = document.getElementById('content-editor-tab');
+            if (contentEditorTab && !contentEditorTab.classList.contains('hidden')) {
+                loadEditableContentForEditor();
+            }
         } else {
-            console.log('admin-index-editor.js: User is not authenticated. Showing login.');
-            showLoginForm();
+            console.log('admin-index-editor.js: User is not authenticated. Hiding editor dashboard sections.');
+            // When not logged in, ensure editor sections are hidden
+            editorDashboard.classList.add('hidden'); // The main dashboard itself
+            // Also hide the save changes panel
+            hideSaveChangesPanel();
         }
     });
-}
-
-function showLoginForm() {
-    loginSection.classList.remove('hidden');
-    editorDashboard.classList.add('hidden');
-    generateAndDisplayCaptcha();
-    emailInput.value = '';
-    passwordInput.value = '';
-    captchaInput.value = '';
-    updateLoginButtonState();
-}
-
-async function showEditorDashboard() {
-    loginSection.classList.add('hidden');
-    editorDashboard.classList.remove('hidden');
-    // Ensure content editor tab is set up if it's the active tab
-    const contentEditorTab = document.getElementById('content-editor-tab');
-    if (contentEditorTab && !contentEditorTab.classList.contains('hidden')) {
-        await loadEditableContentForEditor(); // Load content only when the editor dashboard is visible and active
-    }
-}
-
-// --- CAPTCHA Functions ---
-function generateAndDisplayCaptcha() {
-    currentCaptchaText = generateCaptchaText();
-    if (captchaDisplay) {
-        captchaDisplay.textContent = currentCaptchaText;
-        console.log('admin-index-editor.js: CAPTCHA generated:', currentCaptchaText);
-    }
-}
-
-function updateLoginButtonState() {
-    if (loginAttemptManager.isCooldownActive()) {
-        loginBtn.disabled = true;
-        loginBtnText.textContent = 'Please Wait...';
-        cooldownMessage.classList.remove('hidden');
-        startCooldownTimer();
-    } else if (loginAttemptManager.getFailedAttempts() >= MAX_ATTEMPTS) {
-        loginBtn.disabled = true;
-        loginBtnText.textContent = 'Too Many Attempts';
-        cooldownMessage.classList.remove('hidden');
-    } else {
-        loginBtn.disabled = false;
-        loginBtnText.textContent = 'Access Editor';
-        cooldownMessage.classList.add('hidden');
-        stopCooldownTimer();
-    }
-}
-
-let cooldownInterval;
-function startCooldownTimer() {
-    stopCooldownTimer();
-    let timeLeft = loginAttemptManager.getCooldownRemainingSeconds();
-
-    if (timeLeft > 0) {
-        cooldownTimerSpan.textContent = timeLeft;
-        cooldownInterval = setInterval(() => {
-            timeLeft--;
-            if (timeLeft <= 0) {
-                clearInterval(cooldownInterval);
-                loginAttemptManager.resetAttempts();
-                updateLoginButtonState();
-                updateAttemptsCounter();
-                generateAndDisplayCaptcha();
-            }
-            cooldownTimerSpan.textContent = timeLeft;
-        }, 1000);
-    }
-}
-
-function stopCooldownTimer() {
-    if (cooldownInterval) {
-        clearInterval(cooldownInterval);
-    }
-}
-
-function updateAttemptsCounter() {
-    if (attemptsCounter) {
-        if (loginAttemptManager.getFailedAttempts() > 0) {
-            attemptsCounter.classList.remove('hidden');
-            attemptsCountSpan.textContent = loginAttemptManager.getFailedAttempts();
-        } else {
-            attemptsCounter.classList.add('hidden');
-        }
-    }
-}
-
-// --- Login/Logout Handlers ---
-async function handleLogin(e) {
-    e.preventDefault();
-
-    const enteredEmail = emailInput.value;
-    const enteredPassword = passwordInput.value;
-    const enteredCaptcha = captchaInput.value;
-
-    if (loginAttemptManager.isCooldownActive()) {
-        showNotification('Hold On!', `Please wait ${loginAttemptManager.getCooldownRemainingSeconds()} seconds before trying again.`, 'info');
-        return;
-    }
-
-    if (enteredCaptcha !== currentCaptchaText) {
-        const isCooldown = loginAttemptManager.recordFailedAttempt();
-        updateAttemptsCounter();
-        if (isCooldown) {
-            updateLoginButtonState();
-            showNotification('Access Denied', `Too many failed CAPTCHA attempts. Please wait ${COOLDOWN_SECONDS} seconds.`, 'error');
-        } else {
-            showNotification('Invalid CAPTCHA', 'The security code you entered is incorrect. Please try again.', 'error');
-        }
-        generateAndDisplayCaptcha();
-        captchaInput.value = '';
-        return;
-    }
-
-    try {
-        await signInWithEmailAndPassword(auth, enteredEmail, enteredPassword);
-        console.log('Editor Login successful with Firebase Auth!');
-        loginAttemptManager.resetAttempts();
-        updateAttemptsCounter();
-        updateLoginButtonState();
-        showEditorDashboard();
-        showNotification('Welcome!', 'You have successfully logged in to the content editor.', 'success');
-    } catch (error) {
-        const isCooldown = loginAttemptManager.recordFailedAttempt();
-        updateAttemptsCounter();
-        let errorMessage = 'Login failed. Please check your email and password.';
-        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-            errorMessage = 'Invalid email or password.';
-        } else if (error.code === 'auth/too-many-requests') {
-            errorMessage = `Too many login attempts. Please wait ${COOLDOWN_SECONDS} seconds.`;
-        }
-        
-        if (isCooldown) {
-            updateLoginButtonState();
-            showNotification('Access Denied', `Too many failed attempts. ${errorMessage}`, 'error');
-        } else {
-            showNotification('Login Failed', errorMessage, 'error');
-        }
-        console.error('Firebase Auth Login Error:', error);
-        generateAndDisplayCaptcha();
-    } finally {
-        passwordInput.value = '';
-        captchaInput.value = '';
-    }
-}
-
-async function handleEditorLogout() {
-    try {
-        await signOut(auth);
-        console.log('Logged out from editor!');
-        showLoginForm();
-        showNotification('Goodbye!', 'You have been logged out from the content editor.', 'info');
-    } catch (error) {
-        console.error('Error logging out from editor:', error);
-        showNotification('Error', 'Failed to log out from editor. Please try again.', 'error');
-    }
 }
 
 // --- Content Editor UI Initialization ---
@@ -280,7 +109,7 @@ function initializeEditorUI() {
         editModalSaveBtn.addEventListener('click', applyEdit);
         console.log('admin-index-editor.js: Edit modal listeners attached.');
     } else {
-        console.error('admin-index-editor.js: One or more edit modal elements not found during UI initialization. Check admin-index.html for IDs. Elements found:', {
+        console.error('admin-index-editor.js: One or more edit modal elements not found during UI initialization. Check admin.html for IDs. Elements found:', {
             editTextModalOverlay: !!editTextModalOverlay,
             editModalCloseBtn: !!editModalCloseBtn,
             editModalCancelBtn: !!editModalCancelBtn,
@@ -548,22 +377,21 @@ async function saveEditableText(textId, newContent) {
 }
 
 // --- Event Listeners ---
-loginForm.addEventListener('submit', handleLogin);
-refreshCaptchaBtn.addEventListener('click', generateAndDisplayCaptcha);
+// Removed: loginForm.addEventListener('submit', handleLogin);
+// Removed: refreshCaptchaBtn.addEventListener('click', generateAndDisplayCaptcha);
+// The editorLogoutBtn listener will remain here, as it's directly tied to the editor's logout action.
 editorLogoutBtn.addEventListener('click', handleEditorLogout);
 saveAllChangesBtn.addEventListener('click', saveAllPendingChanges);
 
-// Add event listener for tab clicks to reload content editor if it becomes active
-// This should be done in admin-dashboard.js, not here, to avoid duplication and ensure correct tab handling.
-// However, if this script is still meant to manage the content-editor tab's loading exclusively, keep this part.
-// For now, I'm keeping it as it was in the original admin-index-editor.js, assuming it's the dedicated script for that tab.
+// This listener should stay as it specifically triggers loading editor content when the tab is clicked.
 document.querySelectorAll('.tab-btn').forEach(button => {
     button.addEventListener('click', () => {
         if (button.dataset.tab === 'content-editor') {
             if (auth.currentUser) { // Only load if authenticated
                 loadEditableContentForEditor();
             } else {
-                console.log('Not authenticated, showing login for content editor.');
+                console.log('Not authenticated, content editor is not active.');
+                // Optionally show a message that they need to log in first
             }
         }
     });
