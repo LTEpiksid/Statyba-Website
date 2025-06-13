@@ -12,7 +12,7 @@ import { showNotification, showConfirmationModal, trapFocus, releaseFocus } from
 // --- DOM Elements ---
 // Only editor-specific DOM elements are needed here. Login elements are in admin-dashboard.js.
 const editorDashboard = document.getElementById('admin-dashboard'); // Main dashboard container
-const editorLogoutBtn = document.getElementById('editor-logout-btn'); // Main dashboard logout button
+const editorLogoutBtn = document.getElementById('editor-logout-btn'); // Main dashboard logout button (handled by admin-dashboard.js)
 const saveAllChangesBtn = document.getElementById('save-all-changes-btn');
 const saveAllChangesText = document.getElementById('save-all-changes-text');
 const saveAllChangesSpinner = document.getElementById('save-all-changes-spinner');
@@ -123,6 +123,7 @@ function initializeEditorUI() {
 function setupEditableElements() {
     document.body.classList.add('edit-mode'); // Add class to body to activate editor-specific styles
 
+    console.log('setupEditableElements: Attaching listeners to edit buttons.'); // Add this log
     document.querySelectorAll('.edit-text-btn').forEach(button => {
         const targetId = button.dataset.targetId;
         const contentElement = document.getElementById(targetId);
@@ -134,7 +135,10 @@ function setupEditableElements() {
             } else {
                 contentElement.dataset.originalContent = contentElement.textContent;
             }
-            button.addEventListener('click', () => startEditing(contentElement, button));
+            button.addEventListener('click', () => {
+                console.log(`Edit button clicked for ID: ${targetId}`); // Add this log
+                startEditing(contentElement, button);
+            });
         } else {
             console.warn(`Content element with ID '${targetId}' not found for edit button.`, button);
         }
@@ -142,6 +146,7 @@ function setupEditableElements() {
 }
 
 function startEditing(element, triggerButton) {
+    console.log('startEditing called for element:', element.id); // Add this log
     // If an element is already being edited, finish it first
     if (currentEditableElement && currentEditableElement !== element) {
         finishEditing(); // Call finishEditing without argument to just close current modal
@@ -150,9 +155,8 @@ function startEditing(element, triggerButton) {
     currentEditableElement = element;
     elementThatOpenedModal = triggerButton; // Store the button that opened the modal
 
-    console.log('startEditing called for element:', element.id, 'Text:', element.textContent || element.value);
-    
     if (editTextModalOverlay && editTextArea) {
+        console.log('Edit modal elements are found, proceeding to open modal.'); // Add this log
         const isPlaceholder = element.dataset.isPlaceholder === 'true';
 
         if (isPlaceholder) {
@@ -164,7 +168,7 @@ function startEditing(element, triggerButton) {
         }
         
         editTextModalOverlay.classList.add('open');
-        editTextModalOverlay.classList.remove('hidden');
+        editTextModalOverlay.classList.remove('hidden'); // Ensure hidden is explicitly removed
 
         // Trap focus within the modal
         trapFocus(editTextModalOverlay, editTextArea);
@@ -173,6 +177,9 @@ function startEditing(element, triggerButton) {
     } else {
         console.error('Failed to open edit modal: Modal overlay or text area not found. Ensure initializeEditorUI ran correctly. Debug: ', {
             editTextModalOverlay: !!editTextModalOverlay,
+            editModalCloseBtn: !!editModalCloseBtn, // Added for debugging
+            editModalCancelBtn: !!editModalCancelBtn, // Added for debugging
+            editModalSaveBtn: !!editModalSaveBtn, // Added for debugging
             editTextArea: !!editTextArea
         });
     }
@@ -347,7 +354,8 @@ async function loadEditableContentForEditor() {
                 console.log(`Editor: No content found in Firebase for '${textId}'. Using default HTML content.`);
             }
         });
-        setupEditableElements(); // Set up click listeners AFTER content is loaded
+        // CRITICAL: Call setupEditableElements() AFTER content is loaded and elements are fully rendered/populated.
+        setupEditableElements(); 
     } catch (error) {
         console.error('Editor: Error loading editable content:', error);
         showNotification('Error', `Failed to load website content for editing: ${error.message}`, 'error');
@@ -377,10 +385,8 @@ async function saveEditableText(textId, newContent) {
 }
 
 // --- Event Listeners ---
-// Removed: loginForm.addEventListener('submit', handleLogin);
-// Removed: refreshCaptchaBtn.addEventListener('click', generateAndDisplayCaptcha);
-// The editorLogoutBtn listener will remain here, as it's directly tied to the editor's logout action.
-editorLogoutBtn.addEventListener('click', handleEditorLogout);
+// Removed handleEditorLogout listener, as admin-dashboard.js handles overall logout.
+// editorLogoutBtn.addEventListener('click', handleEditorLogout); // REMOVED THIS LINE
 saveAllChangesBtn.addEventListener('click', saveAllPendingChanges);
 
 // This listener should stay as it specifically triggers loading editor content when the tab is clicked.
@@ -388,10 +394,12 @@ document.querySelectorAll('.tab-btn').forEach(button => {
     button.addEventListener('click', () => {
         if (button.dataset.tab === 'content-editor') {
             if (auth.currentUser) { // Only load if authenticated
-                loadEditableContentForEditor();
+                console.log('Content editor tab clicked, user authenticated. Loading editable content.'); // Added log
+                loadEditableContentForEditor(); // This calls setupEditableElements()
             } else {
                 console.log('Not authenticated, content editor is not active.');
                 // Optionally show a message that they need to log in first
+                showNotification('Access Denied', 'Please log in to access the content editor.', 'info');
             }
         }
     });
