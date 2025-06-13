@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Statyba - Construction</title>
+  <link rel="icon" href="https://placehold.co/16x16/000000/FFFFFF/png?text=S" type="image/png"> <!-- Added favicon -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Custom animations and effects */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+    
+    .fade-in-up {
+      animation: fadeInUp 0.8s ease-out;
+    }
+    
+    .float-animation {
+      animation: float 3s ease-in-out infinite;
+    }
+    
+    .gradient-text {
+      background: linear-gradient(135deg, #ea580c 0%, #dc2626 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .hero-gradient {
+      background: linear-gradient(135deg, #ea580c 0%, #dc2626 100%);
+    }
+    
+    .card-hover {
+      transition: all 0.3s ease;
+    }
+    
+    .card-hover:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    }
+    
+    /* Mobile menu animation */
+    .mobile-menu {
+      transition: all 0.3s ease;
+      transform: translateX(100%);
+    }
+    
+    .mobile-menu.open {
+      transform: translateX(0);
+    }
+    
+    /* Scroll indicator */
+    .scroll-indicator {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 0%;
+      height: 3px;
+      background: linear-gradient(90deg, #ea580c, #dc2626);
+      z-index: 1000;
+      transition: width 0.1s ease;
+    }
+
+    /* Loading spinner */
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #ea580c;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Removed styles for Content Editor Mode - these will now be handled on admin-index.html */
+  </style>
+</head>
+<body class="bg-gray-50 font-sans">
+  <!-- Scroll Progress Indicator -->
+  <div class="scroll-indicator" id="scroll-indicator"></div>
+  
+  <!-- Navbar -->
+  <header class="fixed top-0 w-full bg-white/80 backdrop-blur-md border-b border-gray-200/50 z-50">
+    <nav class="flex justify-between items-center max-w-7xl mx-auto px-6 py-4">
+      <div class="flex items-center space-x-2">
+        <div class="w-8 h-8 bg-gradient-to-r from-orange-600 to-red-600 rounded-lg flex items-center justify-center">
+          <span class="text-white font-bold text-lg" data-text-id="logo-s">S</span>
+        </div>
+        <h1 class="text-2xl font-bold gradient-text" data-text-id="site-title">Statyba</h1>
+      </div>
+      
+      <!-- Desktop Navigation -->
+      <ul class="hidden md:flex items-center space-x-8">
+        <li><a href="#home" class="text-gray-700 hover:text-orange-600 transition-colors duration-200 font-medium" data-text-id="nav-home">Home</a></li>
+        <li><a href="#about" class="text-gray-700 hover:text-orange-600 transition-colors duration-200 font-medium" data-text-id="nav-about">About</a></li>
+        <li><a href="#portfolio" class="text-gray-700 hover:text-orange-600 transition-colors duration-200 font-medium" data-text-id="nav-portfolio">Portfolio</a></li>
+        <li><a href="#contact" class="bg-gradient-to-r from-orange-600 to-red-600 text-white px-6 py-2 rounded-full hover:shadow-lg transition-all duration-200" data-text-id="nav-contact-button">Contact</a></li>
+      </ul>
+      
+      <!-- Mobile Menu Button -->
+      <button id="menu-toggle" class="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors" aria-expanded="false" aria-controls="mobile-menu" aria-label="Open mobile menu">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+      </button>
+    </nav>
+    
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="mobile-menu fixed top-0 right-0 h-full w-64 bg-white shadow-xl md:hidden" role="dialog" aria-modal="true" aria-label="Mobile Navigation">
+      <div class="p-6">
+        <button id="close-menu" class="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-100" aria-label="Close mobile menu">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+        <ul class="mt-8 space-y-4">
+          <li><a href="#home" class="block text-gray-700 hover:text-orange-600 transition-colors py-2" data-text-id="mobile-nav-home">Home</a></li>
+          <li><a href="#about" class="block text-gray-700 hover:text-orange-600 transition-colors py-2" data-text-id="mobile-nav-about">About</a></li>
+          <li><a href="#portfolio" class="block text-gray-700 hover:text-orange-600 transition-colors py-2" data-text-id="mobile-nav-portfolio">Portfolio</a></li>
+          <li><a href="#contact" class="block text-gray-700 hover:text-orange-600 transition-colors py-2" data-text-id="mobile-nav-contact">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section id="home" class="min-h-screen flex items-center justify-center hero-gradient relative overflow-hidden">
+    <!-- Animated background elements -->
+    <div class="absolute inset-0 overflow-hidden">
+      <div class="absolute -top-4 -right-4 w-72 h-72 bg-white/10 rounded-full blur-3xl float-animation"></div>
+      <div class="absolute -bottom-8 -left-8 w-96 h-96 bg-white/5 rounded-full blur-3xl" style="animation-delay: -1s;"></div>
+    </div>
+    
+    <div class="text-center text-white z-10 px-6 max-w-4xl mx-auto">
+      <h2 id="hero-title" class="text-5xl md:text-7xl font-bold mb-6 fade-in-up" data-text-id="hero-title">
+        Building Your <span class="block mt-2">Dream Projects</span>
+      </h2>
+      <p id="hero-subtitle" class="text-xl md:text-2xl mb-8 opacity-90 fade-in-up" style="animation-delay: 0.2s;" data-text-id="hero-subtitle">
+        Professional construction services for a better tomorrow
+      </p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center fade-in-up" style="animation-delay: 0.4s;">
+        <a href="#portfolio" class="bg-white text-orange-600 px-8 py-4 rounded-full font-semibold hover:shadow-xl transition-all duration-300 hover:scale-105" data-text-id="hero-projects-button">
+          View Our Projects
+        </a>
+        <a href="#contact" class="glass-effect text-white px-8 py-4 rounded-full font-semibold hover:bg-white/20 transition-all duration-300" data-text-id="hero-quote-button">
+          Get A Quote
+        </a>
+      </div>
+    </div>
+    
+    <!-- Scroll indicator -->
+    <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-white animate-bounce" aria-hidden="true">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+      </svg>
+    </div>
+  </section>
+
+  <!-- About Section -->
+  <section id="about" class="py-20 bg-white">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="grid md:grid-cols-2 gap-12 items-center">
+        <div>
+          <h2 class="text-4xl font-bold text-gray-900 mb-6" data-text-id="about-heading">About Us</h2>
+          <p id="about-text" class="text-lg text-gray-600 leading-relaxed mb-8" data-text-id="about-description">
+            We're a professional construction company in Lithuania, delivering high-quality building solutions with modern techniques and reliable service.
+          </p>
+          <div class="grid grid-cols-2 gap-6">
+            <div class="text-center">
+              <div class="text-3xl font-bold text-orange-600 mb-2" data-text-id="about-projects-count">100+</div>
+              <div class="text-gray-600" data-text-id="about-projects-label">Projects Completed</div>
+            </div>
+            <div class="text-center">
+              <div class="text-3xl font-bold text-red-600 mb-2" data-text-id="about-years-count">15+</div>
+              <div class="text-gray-600" data-text-id="about-years-label">Years Experience</div>
+            </div>
+          </div>
+        </div>
+        <div class="relative">
+          <div class="bg-gradient-to-r from-orange-600 to-red-600 rounded-2xl p-8 text-white">
+            <h3 class="text-2xl font-semibold mb-4" data-text-id="mission-heading">Our Mission</h3>
+            <p class="text-orange-100" data-text-id="mission-description">To build exceptional structures that stand the test of time while providing outstanding value and service to our clients.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Services Section -->
+  <section class="py-20 bg-gray-50">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="text-center mb-16">
+        <h2 class="text-4xl font-bold text-gray-900 mb-4" data-text-id="services-heading">Our Services</h2>
+        <p class="text-lg text-gray-600" data-text-id="services-subtitle">Complete construction solutions for your needs</p>
+      </div>
+      <div class="grid md:grid-cols-3 gap-8">
+        <div class="bg-white p-8 rounded-2xl shadow-sm card-hover">
+          <div class="w-16 h-16 bg-orange-100 rounded-xl flex items-center justify-center mb-6" aria-hidden="true">
+            <svg class="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold mb-4" data-text-id="service-residential-heading">Residential Construction</h3>
+          <p class="text-gray-600" data-text-id="service-residential-description">Custom homes and residential buildings designed to meet your family's needs.</p>
+        </div>
+        <div class="bg-white p-8 rounded-2xl shadow-sm card-hover">
+          <div class="w-16 h-16 bg-red-100 rounded-xl flex items-center justify-center mb-6" aria-hidden="true">
+            <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M7 7h.01M7 3h5c.512 0 .936.388.993.883l.007.117v2m-6 0h6m0 0v2a2 2 0 002 2h2a2 2 0 002-2V9a2 2 0 00-2-2h-2V7"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold mb-4" data-text-id="service-commercial-heading">Commercial Projects</h3>
+          <p class="text-gray-600" data-text-id="service-commercial-description">Professional commercial buildings and office spaces built to specifications.</p>
+        </div>
+        <div class="bg-white p-8 rounded-2xl shadow-sm card-hover">
+          <div class="w-16 h-16 bg-yellow-100 rounded-xl flex items-center justify-center mb-6" aria-hidden="true">
+            <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold mb-4" data-text-id="service-renovation-heading">Renovation & Remodeling</h3>
+          <p class="text-gray-600" data-text-id="service-renovation-description">Transform existing spaces with modern renovations and improvements.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Portfolio Section -->
+  <section id="portfolio" class="py-20 bg-white">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="text-center mb-16">
+        <h2 class="text-4xl font-bold text-gray-900 mb-4" data-text-id="portfolio-heading">Our Portfolio</h2>
+        <p class="text-lg text-gray-600" data-text-id="portfolio-subtitle">Recent construction projects we're proud of</p>
+      </div>
+      
+      <!-- Loading spinner -->
+      <div id="portfolio-loading" class="flex justify-center items-center py-12" role="status" aria-live="polite" aria-label="Loading projects">
+        <div class="spinner"></div>
+        <span class="ml-2 text-gray-600">Loading projects...</span>
+      </div>
+
+      <!-- Error message display -->
+      <div id="portfolio-error" class="hidden text-center py-12" role="alert" aria-live="assertive">
+        <div class="text-red-500 mb-4" aria-hidden="true">
+          <svg class="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+        <h3 class="text-xl font-semibold text-gray-700 mb-2" data-text-id="portfolio-error-heading">Error Loading Portfolio</h3>
+        <p class="text-gray-600" id="portfolio-error-message" data-text-id="portfolio-error-description">There was an issue fetching projects. Please try again later.</p>
+      </div>
+      
+      <!-- Featured Projects (first 3) -->
+      <div id="portfolio-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 hidden">
+        <!-- Projects loaded dynamically with lazy loading -->
+      </div>
+      
+      <!-- Show All Projects Button -->
+      <div class="text-center mt-12">
+        <button id="show-all-projects" class="bg-gradient-to-r from-orange-600 to-red-600 text-white px-8 py-3 rounded-full font-semibold hover:shadow-lg transition-all duration-200 hover:scale-105 hidden" data-text-id="view-all-projects-button">
+          View All Projects
+        </button>
+      </div>
+      
+      <!-- All Projects Modal -->
+      <div id="all-projects-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 hidden" role="dialog" aria-modal="true" aria-labelledby="all-projects-modal-heading">
+        <div class="bg-white rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+          <div class="sticky top-0 bg-white border-b border-gray-200 p-6 flex justify-between items-center">
+            <h3 id="all-projects-modal-heading" class="text-2xl font-bold text-gray-900" data-text-id="all-projects-modal-heading">All Projects</h3>
+            <button id="close-projects-modal" class="p-2 hover:bg-gray-100 rounded-lg" aria-label="Close projects modal">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+          <div class="p-6">
+            <div id="all-projects-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <!-- All projects loaded here -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact Section -->
+  <section id="contact" class="py-20 bg-gray-50">
+    <div class="max-w-4xl mx-auto px-6">
+      <div class="text-center mb-16">
+        <h2 class="text-4xl font-bold text-gray-900 mb-4" data-text-id="contact-heading">Get In Touch</h2>
+        <p class="text-lg text-gray-600" data-text-id="contact-subtitle">Ready to start your construction project? Let's discuss!</p>
+      </div>
+      
+      <div class="grid md:grid-cols-2 gap-12">
+        <div>
+          <div class="space-y-6">
+            <div class="flex items-center space-x-4">
+              <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center" aria-hidden="true">
+                <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                </svg>
+              </div>
+              <div>
+                <div class="font-semibold text-gray-900" data-text-id="contact-email-label">Email</div>
+                <!-- Removed Cloudflare email decode script for consistency -->
+                <div id="contact-email" class="text-gray-600" data-text-id="contact-email-value">your.email@example.com</div> 
+              </div>
+            </div>
+            <div class="flex items-center space-x-4">
+              <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center" aria-hidden="true">
+                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                </svg>
+              </div>
+              <div>
+                <div class="font-semibold text-gray-900" data-text-id="contact-phone-label">Phone</div>
+                <div id="contact-phone" class="text-gray-600" data-text-id="contact-phone-value">+370 000 0000</div>
+              </div>
+            </div>
+            <div class="flex items-center space-x-4">
+              <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center" aria-hidden="true">
+                <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+              </div>
+              <div>
+                <div class="font-semibold text-gray-900" data-text-id="contact-location-label">Location</div>
+                <div class="text-gray-600" data-text-id="contact-location-value">Klaipėda, Lithuania</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="bg-white rounded-2xl p-8 shadow-sm">
+          <form id="contact-form" class="space-y-6">
+            <div>
+              <label for="name" class="sr-only">Your Name</label>
+              <input type="text" id="name" name="name" placeholder="Your Name" required
+                     class="w-full p-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
+                     data-text-id="contact-form-name-placeholder">
+            </div>
+            <div>
+              <label for="email" class="sr-only">Your Email</label>
+              <input type="email" id="email" name="email" placeholder="Your Email" required
+                     class="w-full p-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
+                     data-text-id="contact-form-email-placeholder">
+            </div>
+            <div>
+              <label for="message" class="sr-only">Tell us about your project</label>
+              <textarea id="message" name="message" placeholder="Tell us about your project" rows="5" required
+                        class="w-full p-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200 resize-none"
+                        data-text-id="contact-form-message-placeholder"></textarea>
+            </div>
+            <button type="submit" 
+                    class="w-full bg-gradient-to-r from-orange-600 to-red-600 text-white p-4 rounded-xl font-semibold hover:shadow-lg transition-all duration-200 hover:scale-105"
+                    data-text-id="contact-form-submit-button">
+              Send Message
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-gray-900 text-white py-12">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="grid md:grid-cols-3 gap-8">
+        <div>
+          <div class="flex items-center space-x-2 mb-4">
+            <div class="w-8 h-8 bg-gradient-to-r from-orange-600 to-red-600 rounded-lg flex items-center justify-center">
+              <span class="text-white font-bold text-lg" data-text-id="logo-s">S</span>
+            </div>
+            <h3 class="text-xl font-bold" data-text-id="footer-site-name">Statyba</h3>
+          </div>
+          <p class="text-gray-400" data-text-id="footer-tagline">Building excellence in construction.</p>
+        </div>
+        <div>
+          <h4 class="font-semibold mb-4" data-text-id="footer-services-heading">Services</h4>
+          <ul class="space-y-2 text-gray-400">
+            <li data-text-id="footer-service-residential">Residential Construction</li>
+            <li data-text-id="footer-service-commercial">Commercial Projects</li>
+            <li data-text-id="footer-service-renovation">Renovation & Remodeling</li>
+            <li data-text-id="footer-service-management">Project Management</li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-semibold mb-4" data-text-id="footer-connect-heading">Connect</h4>
+          <div class="flex space-x-4">
+            <!-- Removed one button and updated the remaining one to Facebook icon -->
+            <a href="#" class="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-orange-600 transition-colors" aria-label="Visit us on Facebook">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.811c-3.27 0-4.189 1.458-4.189 4.009v2.991z"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+      </div>
+      <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+        <p data-text-id="footer-copyright">&copy; 2025 Statyba. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Firebase SDKs -->
+  <!-- Removed problematic Cloudflare scripts -->
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
