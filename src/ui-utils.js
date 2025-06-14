@@ -126,47 +126,52 @@ export function hideNotification() {
 }
 
 /**
- * Displays a custom confirmation modal.
+ * Displays a custom confirmation modal and returns a Promise that resolves to true (confirm) or false (cancel).
  * @param {string} title - The title of the confirmation.
  * @param {string} message - The message content.
- * @param {function} onConfirm - Callback function to execute if confirmed.
- * @param {function} [onCancel] - Optional callback function to execute if cancelled.
+ * @param {string} okButtonText - Text for the OK button.
+ * @param {string} cancelButtonText - Text for the Cancel button.
+ * @returns {Promise<boolean>} Resolves to true if confirmed, false if cancelled.
  */
-export function showConfirmationModal(title, message, onConfirm, onCancel = () => {}) {
-    if (!confirmModal) {
-        // Fallback: If not already set up, try to set up now
-        setupConfirmationModal();
+export function showConfirmationModal(title, message, okButtonText = 'Confirm', cancelButtonText = 'Cancel') {
+    return new Promise((resolve) => {
         if (!confirmModal) {
-            console.error('Failed to initialize confirmation modal. Cannot show confirmation.');
-            return;
+            setupConfirmationModal();
+            if (!confirmModal) {
+                console.error('Failed to initialize confirmation modal. Cannot show confirmation.');
+                resolve(false); // Resolve false if modal cannot be set up
+                return;
+            }
         }
-    }
 
-    confirmTitle.textContent = title;
-    confirmMessage.textContent = message;
+        confirmTitle.textContent = title;
+        confirmMessage.textContent = message;
 
-    // Clone and replace buttons to remove old event listeners
-    const newOkBtn = confirmOkBtn.cloneNode(true);
-    confirmOkBtn.parentNode.replaceChild(newOkBtn, confirmOkBtn);
-    confirmOkBtn = newOkBtn; 
+        // Clone and replace buttons to remove old event listeners
+        const newOkBtn = confirmOkBtn.cloneNode(true);
+        confirmOkBtn.parentNode.replaceChild(newOkBtn, confirmOkBtn);
+        confirmOkBtn = newOkBtn;
+        confirmOkBtn.textContent = okButtonText;
 
-    const newCancelBtn = confirmCancelBtn.cloneNode(true);
-    confirmCancelBtn.parentNode.replaceChild(newCancelBtn, confirmCancelBtn);
-    confirmCancelBtn = newCancelBtn; 
+        const newCancelBtn = confirmCancelBtn.cloneNode(true);
+        confirmCancelBtn.parentNode.replaceChild(newCancelBtn, confirmCancelBtn);
+        confirmCancelBtn = newCancelBtn;
+        confirmCancelBtn.textContent = cancelButtonText;
 
-    // Attach new listeners
-    confirmOkBtn.addEventListener('click', () => {
-        onConfirm();
-        confirmModal.classList.add('hidden');
+        // Attach new listeners that resolve the promise
+        confirmOkBtn.addEventListener('click', () => {
+            confirmModal.classList.add('hidden');
+            resolve(true); // User confirmed
+        }, { once: true }); // Use { once: true } to automatically remove listener after first click
+
+        confirmCancelBtn.addEventListener('click', () => {
+            confirmModal.classList.add('hidden');
+            resolve(false); // User cancelled
+        }, { once: true }); // Use { once: true } to automatically remove listener after first click
+
+        confirmModal.classList.remove('hidden');
+        confirmOkBtn.focus();
     });
-
-    confirmCancelBtn.addEventListener('click', () => {
-        onCancel();
-        confirmModal.classList.add('hidden');
-    });
-
-    confirmModal.classList.remove('hidden');
-    confirmOkBtn.focus();
 }
 
 // Named function for tab key handling, so we can reference it for removal

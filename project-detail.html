@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="project-detail-title-tag">Project Details - Statyba</title>
+  <link rel="icon" href="https://placehold.co/16x16/000000/FFFFFF/png?text=S" type="image/png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Custom styles for the project detail page */
+    body {
+      font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      background-color: #f3f4f6; /* Light gray background */
+      color: #374151; /* Darker gray text for readability */
+    }
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    .back-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #1d4ed8; /* blue-700 */
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .back-button:hover {
+      color: #1e40af; /* blue-800 */
+    }
+    /* Removed .project-image specific style as images will be in a gallery */
+    .loading-spinner {
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      border-top: 4px solid #f97316; /* Orange color */
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body class="bg-gray-100">
+  <div class="container py-8">
+    <a href="index.html#portfolio" class="back-button mb-8">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+      </svg>
+      Back to Projects
+    </a>
+
+    <!-- Project Detail Content -->
+    <div id="project-detail-content" class="bg-white p-8 rounded-xl shadow-lg">
+      <!-- Loading state -->
+      <div id="project-loading" class="flex flex-col items-center justify-center py-12">
+        <div class="loading-spinner mb-4"></div>
+        <p class="text-gray-600">Loading project details...</p>
+      </div>
+
+      <!-- Error state -->
+      <div id="project-error" class="hidden text-center py-12">
+        <h2 class="text-2xl font-bold text-red-600 mb-4">Project Not Found</h2>
+        <p class="text-gray-700">The project you are looking for could not be found. It may have been deleted or the link is incorrect.</p>
+      </div>
+
+      <!-- Actual Project Details (will be populated by JavaScript) -->
+      <div id="project-display" class="hidden">
+        <h1 id="project-title" class="text-4xl font-extrabold text-gray-900 mb-6"></h1>
+        
+        <!-- Image Gallery for Multiple Images -->
+        <div id="project-image-gallery" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+          <!-- Images will be loaded dynamically here by JavaScript -->
+        </div>
+
+        <p id="project-description" class="text-lg text-gray-700 leading-relaxed"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script type="module" src="./src/firebase.js"></script>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
